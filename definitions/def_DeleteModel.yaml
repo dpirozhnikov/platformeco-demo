@@ -1,0 +1,79 @@
+info:
+  name: def_DeleteModel
+  title: def_DeleteModel
+  version: 1.0.0
+  description: Удаление документа из БД
+connector:
+  id: http
+  resource:
+    path: '/models/:documentNumber'
+    method: DELETE
+    requestValidation: true
+    responseValidation: false
+    responsesSchema:
+      - statusCode: '200'
+        description: OK
+        contentType: application/json
+    querySchema: |-
+      {
+        "type": "object",
+        "properties": {
+          "documentNumber": {
+            "default": "DOC123456",
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentNumber"
+        ]
+      }
+    contentType: application/json
+  skipParsing: false
+  disableSynchronizationChanges: false
+  queryArraySerializeMethod: default
+flow:
+  execute:
+    - postgresql:
+        title: Удаление из БД
+        description: '[Execute PostgreSQL query]'
+        id: 9d0ed7b5-da6a-40f4-b2ed-3b40d7d62806
+        proceed-on-error: true
+        connectorID: postgres-connector
+        configurationType: UI
+        text: "DELETE FROM public.bssdemo\r\n    WHERE documentNumber = $1\r\n    RETURNING documentNumber;"
+        paramsConfigurationType: UI
+        output: pg_res
+        parameters:
+          - type: String
+            value: '${request.query.documentNumber}'
+    - setResponse:
+        title: '[Set Response]'
+        description: '[Set response status, headers and body]'
+        id: 5bbbebc0-953a-4db3-967b-8c60eb7e81d7
+        configurationType: UI
+        status: '200'
+        doJsonStringify: true
+        sendReplyInstantly: false
+        terminateFlow: false
+        headers:
+          content-type: application/json
+        body: "{\r\n  \"deleted\": ${pg_res}\r\n}\r\n\r\n"
+documentationType: openapi3
+documentation:
+  paths:
+    '/models/{documentNumber}':
+      delete:
+        parameters:
+          - name: documentNumber
+            in: query
+            required: true
+            schema:
+              type: string
+              default: DOC123456
+        responses:
+          '200':
+            description: OK
+        description: Удаление модели из БД по номеру документа
+        summary: Удаление модели из БД по номеру документа
+  openapi: 3.0.0
+id: 4840171b-1b9e-4bb2-be1e-1db47ab3f8fb

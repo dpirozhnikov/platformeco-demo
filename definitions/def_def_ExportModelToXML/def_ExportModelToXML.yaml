@@ -1,0 +1,190 @@
+info:
+  name: def_ExportModelToXML
+  title: def_ExportModelToXML
+  version: 1.0.0
+connector:
+  id: http
+  resource:
+    path: '/models/:documentNumber/export'
+    method: GET
+    requestValidation: true
+    responseValidation: false
+    responsesSchema:
+      - statusCode: '200'
+        description: OK
+        contentType: application/json
+    querySchema: |-
+      {
+        "type": "object",
+        "properties": {
+          "documentNumber": {
+            "default": "DOC123456",
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentNumber"
+        ]
+      }
+    contentType: application/json
+  skipParsing: false
+  disableSynchronizationChanges: false
+  queryArraySerializeMethod: default
+flow:
+  execute:
+    - RedisGetKey:
+        id: 72e04a03-dfe6-4ac9-afa4-cac7e1b66271
+        key: '${request.query.documentNumber}'
+        proceed-on-error: false
+        title: Из кэша
+        connector: ioredis
+        output: redis_res
+        timeout: 300000
+        configurationType: UI
+    - switch:
+        title: Проверка
+        id: 27ee19cb-f70e-445b-90be-cb83000bb659
+        case:
+          - execute:
+              - function:
+                  id: 32eef4cb-7321-4311-9979-148c97e715bf
+                  name: to_json
+                  title: В JSON
+                  output: model
+            title: Есть ключ
+            condition: redis_res
+          - otherwise:
+              - postgresql:
+                  title: Из БД
+                  description: '[Execute PostgreSQL query]'
+                  id: 440a4feb-7d62-4c99-aa9d-507a1937eb8a
+                  proceed-on-error: false
+                  connectorID: postgres-connector
+                  configurationType: UI
+                  text: "SELECT\r\n    documentNumber, documentDate, documentSum, chargeAccount, depositAccount, description, status\r\nFROM\r\n    public.bssdemo\r\nWHERE\r\n    documentNumber = $1;"
+                  paramsConfigurationType: UI
+                  output: pg_res
+                  parameters:
+                    - type: String
+                      value: '${request.query.documentNumber}'
+              - switch:
+                  title: Проверка
+                  id: b58a2bec-d509-4b0e-9578-5c3938dedb7c
+                  case:
+                    - execute:
+                        - RedisSetKey:
+                            title: Запись в кэш
+                            id: 9acdb306-9786-4f77-ab24-211b9833fea8
+                            connector: ioredis
+                            timeout: 300000
+                            configurationType: UI
+                            key: '${request.query.documentNumber}'
+                            value: '${JSON.stringify(pg_res[0])}'
+                            expireTime: 180
+                            expireTimeUnits: SECONDS
+                            proceed-on-error: true
+                        - function:
+                            id: 54d1a957-3c97-4a0a-8442-f85906a121d0
+                            name: to_json_copy
+                            title: В JSON
+                            output: model
+                      title: Есть модель
+                      condition: pg_res.length
+                    - otherwise:
+                        - raiseError:
+                            title: '[Raise Error]'
+                            description: '[Terminate flow with error]'
+                            id: 2d3bb844-fc5f-4376-a00f-ac293ba58a15
+                            configurationType: UI
+                            status: '500'
+                            message: Нет модели с таким номером документа
+                  otherwise: true
+        otherwise: true
+    - function:
+        id: 3eaee879-bf7d-4291-8a28-e19698ba8955
+        name: change_status
+        title: Обновление статуса
+        output: model
+    - parallel:
+        id: e9f8b771-ef75-419a-81c2-43cd25dcf6ad
+        title: Параллельно
+        branches:
+          - execute:
+              - JsonToXml:
+                  id: 535b02e3-c9b3-4228-848b-b35456c508d1
+                  input: model
+                  output: model_xml
+          - execute:
+              - function:
+                  id: 0c687a5f-0543-42d3-979e-b6fb9bd2a6d2
+                  name: val_for_kafka
+                  title: Статус для кафки
+                  output: val_for_kafka
+              - kafkaSend:
+                  title: В Кафку
+                  id: b341e9fe-21f6-43cf-9c3a-a751f9086532
+                  connectorID: kafka-write
+                  configurationType: UI
+                  proceed-on-error: true
+                  output: kafka_res
+                  topic: kafkareadtest
+                  transactional: false
+                  messages:
+                    - key: '${request.query.documentNumber}'
+                      value: '${JSON.stringify(val_for_kafka)}'
+                  key:
+                    configurationType: Raw
+                    dataType: String
+                  value:
+                    configurationType: Raw
+                    dataType: JSON
+    - switch:
+        title: Экспорт
+        id: 7c743186-e030-48f5-82e7-d0abf0a7b599
+        case:
+          - execute:
+              - function:
+                  id: 40b6aaf0-415b-439c-930a-ad7c5f022ce5
+                  name: xml_to_buf
+                  title: В буфер
+                  output: buf
+              - setResponse:
+                  title: '[Set Response]'
+                  description: '[Set response status, headers and body]'
+                  id: c96a4b47-8a68-4caa-9d6e-f3f0611b761f
+                  configurationType: Context variable
+                  valueName: buf
+            condition: 'true'
+          - otherwise:
+              - setResponse:
+                  title: '[Set Response]'
+                  description: '[Set response status, headers and body]'
+                  id: 69091ad6-7635-4f23-afc5-1c5815172ad7
+                  configurationType: UI
+                  status: '200'
+                  doJsonStringify: false
+                  sendReplyInstantly: false
+                  terminateFlow: false
+                  headers:
+                    content-type: application/xml
+                  body: '${model_xml}'
+        otherwise: true
+documentationType: openapi3
+documentation:
+  paths:
+    '/models/{documentNumber}/export':
+      get:
+        parameters:
+          - name: documentNumber
+            in: query
+            required: true
+            schema:
+              type: string
+              default: DOC123456
+        responses:
+          '200':
+            description: OK
+        summary: Экспорт модели в XML и изменение статуса
+        description: Экспорт модели в XML и изменение статуса
+  openapi: 3.0.0
+id: abab3274-41c1-45b0-bb43-04f6789ccb90

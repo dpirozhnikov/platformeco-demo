@@ -1,0 +1,98 @@
+id: eedee0c9-407b-4de6-b4e5-5bb6069ead67
+info:
+  name: def_FromKafkaToDB
+  title: def_FromKafkaToDB
+  version: 1.0.0
+connector:
+  id: kafka-write
+  topic: kafkareadtest2
+  value:
+    dataType: JSON
+    schema: |-
+      {
+        "$ref": "data/statused_model"
+      }
+  retry:
+    kind: Finite
+    timeout: 5000
+    maxAttempts: 3
+flow:
+  execute:
+    - function:
+        id: 82d53216-af24-48b7-9029-de7971d5c03d
+        name: var_from_kafka
+        title: Из Кафки
+        output: from_kafka
+    - switch:
+        title: Определение запроса
+        id: d9ab5c4d-db8b-4af7-933a-8c8aafabaa22
+        case:
+          - execute:
+              - postgresql:
+                  id: 050533d1-60ae-4fa5-93c7-f64877404840
+                  text: "INSERT INTO public.bssdemo (\r\n    documentNumber, documentDate, documentSum, chargeAccount, depositAccount, description, status\r\n) VALUES ($1, $2, $3, $4, $5, $6, $7 ) \r\nON CONFLICT (documentNumber) DO UPDATE SET\r\n    documentDate = EXCLUDED.documentDate,\r\n    documentSum = EXCLUDED.documentSum,\r\n    chargeAccount = EXCLUDED.chargeAccount,\r\n    depositAccount = EXCLUDED.depositAccount,\r\n    description = EXCLUDED.description,\r\n    status = EXCLUDED.status;"
+                  paramsConfigurationType: UI
+                  output: pg_res
+                  parameters:
+                    - type: String
+                      value: '${from_kafka.documentNumber}'
+                    - type: String
+                      value: '${from_kafka.documentDate}'
+                    - type: Number
+                      value: '${from_kafka.documentSum}'
+                    - type: String
+                      value: '${from_kafka.chargeAccount}'
+                    - type: String
+                      value: '${from_kafka.depositAccount}'
+                    - type: String
+                      value: '${from_kafka.description}'
+                    - type: String
+                      value: '${from_kafka.status}'
+                  title: Вставка в PG
+                  description: '[Execute PostgreSQL query]'
+                  proceed-on-error: true
+                  connectorID: postgres-connector
+                  configurationType: UI
+            title: Полная модель
+            condition: from_kafka.documentNumber
+          - execute:
+              - postgresql:
+                  title: Новый статус в PG
+                  description: '[Execute PostgreSQL query]'
+                  id: cac151cb-b161-4922-99c1-ba3e68cbd628
+                  proceed-on-error: true
+                  connectorID: postgres-connector
+                  configurationType: UI
+                  text: "UPDATE public.bssdemo\r\nSET status = $2\r\nWHERE documentNumber = $1"
+                  paramsConfigurationType: UI
+                  output: pg_res
+                  parameters:
+                    - type: String
+                      value: '${request.messages[0].key}'
+                    - type: String
+                      value: '${from_kafka.status}'
+            title: Изменение статуса
+            condition: from_kafka.status
+          - otherwise:
+              - raiseError:
+                  title: '[Raise Error]'
+                  description: '[Terminate flow with error]'
+                  id: 565f7a13-0b73-41ec-bc0a-3c9e32efa6dc
+                  configurationType: UI
+                  status: '500'
+                  message: Некорректное сообщение
+        otherwise: true
+    - setResponse:
+        title: '[Set Response]'
+        description: '[Set response status, headers and body]'
+        id: 4be20231-a595-4642-9a8e-0f1d3b40499d
+        configurationType: UI
+        status: '200'
+        doJsonStringify: true
+        sendReplyInstantly: false
+        terminateFlow: false
+        body: '${pg_res}'
+documentationType: openapi2
+documentation:
+  swagger: '2.0'
+  paths: {}

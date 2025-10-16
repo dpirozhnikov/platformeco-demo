@@ -1,0 +1,59 @@
+id: 66782bdf-9496-4a0a-911f-d5fcd6ff43bb
+info:
+  name: HelloWorld
+  title: HelloWorld
+  version: 1.0.0
+connector:
+  id: http
+  resource:
+    method: GET
+    path: /helloWorld
+    contentType: application/json
+    requestValidation: true
+    responseValidation: false
+  skipParsing: false
+  disableSynchronizationChanges: false
+  queryArraySerializeMethod: default
+flow:
+  execute:
+    - kafkaRead:
+        id: e666a438-960b-4989-ac83-be49450a3d29
+        execute: []
+        topic: kafkareadtest
+        numberOfMessages: 1
+        readTimeout: 1000
+        key:
+          dataType: String
+        value:
+          dataType: JSON
+          schema: |-
+            {
+              "$ref": "data/statused_model"
+            }
+        title: '[Read Kafka Consumer]'
+        connectorID: kafka-write
+        proceed-on-error: false
+        configurationType: UI
+        output: kafres
+    - setResponse:
+        title: helloResponse
+        description: '[Set response status, headers and body]'
+        id: 54ae6e06-8e23-4e76-b9a2-51b6ef59a668
+        configurationType: UI
+        status: '200'
+        doJsonStringify: true
+        sendReplyInstantly: false
+        terminateFlow: false
+        headers:
+          cointent-type: application/json
+        body: '${kafres}'
+documentationType: openapi3
+documentation:
+  paths:
+    /helloWorld:
+      get:
+        parameters: []
+        responses:
+          '200':
+            description: OK
+  openapi: 3.0.0

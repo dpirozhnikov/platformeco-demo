@@ -1,0 +1,389 @@
+{
+  "connectors": {
+    "type": "const",
+    "value": [
+      {
+        "id": "http",
+        "name": "fastify-connector",
+        "exposedPort": 4000,
+        "enabled": true,
+        "settings": {
+          "listenAddr": "::",
+          "listenPort": 4000,
+          "bodyLimit": 1048576,
+          "underPressureOptions": {
+            "message": "Service Unavailable",
+            "retryAfter": 10,
+            "healthCheckInterval": -1,
+            "sampleInterval": 5
+          },
+          "multipartLimits": {
+            "fieldNameSize": 100,
+            "fieldSize": 1048576,
+            "headerPairs": 2000
+          },
+          "octetStreamSizeLimit": 5242880
+        }
+      },
+      {
+        "id": "superagent-default",
+        "name": "superagent-connector",
+        "settings": {
+          "disableTLS": true
+        }
+      },
+      {
+        "id": "kafka-write",
+        "name": "kafka-connector",
+        "enabled": true,
+        "initOrder": 1,
+        "settings": {
+          "connection": {
+            "group.id": "bssdemogroupid",
+            "bootstrap.servers": [
+              "rc1d-e9bf1381angl887m.mdb.yandexcloud.net:9091",
+              "rc1d-e9bf1381angl887m.mdb.yandexcloud.net:9092"
+            ]
+          },
+          "commitBeforeRebalance": false,
+          "parameters": [
+            {
+              "key": "security.protocol",
+              "value": "SASL_SSL"
+            },
+            {
+              "key": "sasl.mechanism",
+              "value": "SCRAM-SHA-512"
+            },
+            {
+              "key": "ssl.truststore.location",
+              "value": "./certs/truststore.jks"
+            },
+            {
+              "key": "sasl.jaas.config",
+              "value": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"demo\" password=\"36C95AF6UXjY\";"
+            },
+            {
+              "key": "ssl.truststore.password",
+              "value": "i5ZAEHjH3MH7"
+            },
+            {
+              "key": "max.poll.records",
+              "value": "1"
+            }
+          ],
+          "nats": {
+            "servers": [
+              "nats://localhost:4222"
+            ]
+          },
+          "timeouts": {
+            "connectorInit": 60000,
+            "readPollBatch": 30000,
+            "readPollEvents": 10000,
+            "consumerTransferBatch": 5000,
+            "producerSendBatch": 3000,
+            "commitBatch": 30000,
+            "consumerPollMaxDuration": 100
+          }
+        }
+      },
+      {
+        "id": "kafka-read",
+        "name": "kafka-connector",
+        "enabled": true,
+        "initOrder": 2,
+        "settings": {
+          "connection": {
+            "group.id": "bssdemogroupid",
+            "bootstrap.servers": [
+              "rc1d-e9bf1381angl887m.mdb.yandexcloud.net:9091",
+              "rc1d-e9bf1381angl887m.mdb.yandexcloud.net:9092"
+            ]
+          },
+          "commitBeforeRebalance": false,
+          "parameters": [
+            {
+              "key": "security.protocol",
+              "value": "SASL_SSL"
+            },
+            {
+              "key": "sasl.mechanism",
+              "value": "SCRAM-SHA-512"
+            },
+            {
+              "key": "ssl.truststore.location",
+              "value": "./certs/truststore.jks"
+            },
+            {
+              "key": "sasl.jaas.config",
+              "value": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"demo\" password=\"36C95AF6UXjY\";"
+            },
+            {
+              "key": "ssl.truststore.password",
+              "value": "i5ZAEHjH3MH7"
+            },
+            {
+              "key": "max.poll.records",
+              "value": "1"
+            }
+          ],
+          "nats": {
+            "servers": [
+              "nats://localhost:4222"
+            ]
+          },
+          "timeouts": {
+            "connectorInit": 60000,
+            "readPollBatch": 30000,
+            "readPollEvents": 10000,
+            "consumerTransferBatch": 5000,
+            "producerSendBatch": 3000,
+            "commitBatch": 30000,
+            "consumerPollMaxDuration": 100
+          }
+        }
+      },
+      {
+        "id": "postgres-connector",
+        "name": "postgres-connector",
+        "enabled": true,
+        "initOrder": 3,
+        "settings": {
+          "host": "rc1d-7mlonv17uepbez5c.mdb.yandexcloud.net",
+          "port": 6432,
+          "database": "demo",
+          "user": "demo",
+          "password": "97Vv8Rej2G45",
+          "parseInputDatesAsUTC": false,
+          "max": 10,
+          "connectionTimeoutMillis": 0,
+          "idleTimeoutMillis": 30000,
+          "tlsConfigurationType": "require"
+        }
+      },
+      {
+        "id": "ioredis",
+        "name": "ioredis-connector",
+        "enabled": false,
+        "settings": {
+          "host": "localhost",
+          "port": 6379,
+          "serverType": "Standalone"
+        }
+      },
+      {
+        "id": "test1",
+        "name": "kafka-connector",
+        "enabled": true,
+        "initOrder": 3,
+        "settings": {
+          "connection": {
+            "group.id": "bssdemogroupid-2",
+            "bootstrap.servers": [
+              "rc1d-e9bf1381angl887m.mdb.yandexcloud.net:9091",
+              "rc1d-e9bf1381angl887m.mdb.yandexcloud.net:9092"
+            ]
+          },
+          "commitBeforeRebalance": false,
+          "parameters": [
+            {
+              "key": "security.protocol",
+              "value": "SASL_SSL"
+            },
+            {
+              "key": "sasl.mechanism",
+              "value": "SCRAM-SHA-512"
+            },
+            {
+              "key": "ssl.truststore.location",
+              "value": "./certs/truststore.jks"
+            },
+            {
+              "key": "sasl.jaas.config",
+              "value": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"demo\" password=\"36C95AF6UXjY\";"
+            },
+            {
+              "key": "ssl.truststore.password",
+              "value": "i5ZAEHjH3MH7"
+            },
+            {
+              "key": "max.poll.records",
+              "value": "1"
+            }
+          ],
+          "nats": {
+            "servers": [
+              "nats://localhost:4222"
+            ]
+          },
+          "timeouts": {
+            "connectorInit": 60000,
+            "readPollBatch": 30000,
+            "readPollEvents": 10000,
+            "consumerTransferBatch": 5000,
+            "producerSendBatch": 3000,
+            "commitBatch": 30000,
+            "consumerPollMaxDuration": 100
+          }
+        }
+      },
+      {
+        "id": "test2",
+        "name": "kafka-connector",
+        "enabled": true,
+        "initOrder": 11,
+        "settings": {
+          "connection": {
+            "group.id": "bssdemogroupid-1",
+            "bootstrap.servers": [
+              "rc1d-e9bf1381angl887m.mdb.yandexcloud.net:9091",
+              "rc1d-e9bf1381angl887m.mdb.yandexcloud.net:9092"
+            ]
+          },
+          "commitBeforeRebalance": false,
+          "parameters": [
+            {
+              "key": "security.protocol",
+              "value": "SASL_SSL"
+            },
+            {
+              "key": "sasl.mechanism",
+              "value": "SCRAM-SHA-512"
+            },
+            {
+              "key": "ssl.truststore.location",
+              "value": "./certs/truststore.jks"
+            },
+            {
+              "key": "sasl.jaas.config",
+              "value": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"demo\" password=\"36C95AF6UXjY\";"
+            },
+            {
+              "key": "ssl.truststore.password",
+              "value": "i5ZAEHjH3MH7"
+            },
+            {
+              "key": "max.poll.records",
+              "value": "1"
+            }
+          ],
+          "nats": {
+            "servers": [
+              "nats://localhost:4222"
+            ]
+          },
+          "timeouts": {
+            "connectorInit": 60000,
+            "readPollBatch": 30000,
+            "readPollEvents": 10000,
+            "consumerTransferBatch": 5000,
+            "producerSendBatch": 3000,
+            "commitBatch": 30000,
+            "consumerPollMaxDuration": 100
+          }
+        }
+      }
+    ]
+  },
+  "loaders": [],
+  "context": {
+    "acc_list": [
+      "123-1",
+      "234-1",
+      "345-1",
+      "456-1",
+      "567-1",
+      "678-1",
+      "789-1",
+      "890-1",
+      "901-1",
+      "012-1"
+    ]
+  },
+  "core": {
+    "disableTLS": true,
+    "debugPort": 4004,
+    "debugMode": true,
+    "policies": {
+      "Common Policies": [
+        "./node_modules/@platformeco/superagent-connector/dist/*",
+        "./node_modules/@platformeco/fastify-connector/dist/*",
+        "./node_modules/@platformeco/mongo-connector/dist/*",
+        "./node_modules/@platformeco/ioredis-connector/dist/*",
+        "./node_modules/@platformeco/amqplib-connector/dist/*",
+        "./node_modules/@platformeco/jdbc-connector/dist/*",
+        "./node_modules/@platformeco/smtp-connector/dist/*",
+        "./node_modules/@platformeco/postgres-connector/dist/*",
+        "./node_modules/@platformeco/kafka-connector/dist/*",
+        "./node_modules/@platformeco/ftp-connector/dist/*",
+        "./node_modules/@platformeco/socketio-connector/src/*",
+        "./node_modules/@platformeco/jsonschema-policy/*",
+        "./node_modules/@platformeco/settags-policy/*",
+        "./node_modules/@platformeco/jsontobuffer-policy/*",
+        "./node_modules/@platformeco/buffertostring-policy/*",
+        "./node_modules/@platformeco/buffertojson-policy/*",
+        "./node_modules/@platformeco/xmltojson-policy/*",
+        "./node_modules/@platformeco/jwt-policies/src/*",
+        "./node_modules/@platformeco/setlogs-policy/*",
+        "./node_modules/@platformeco/crypto-policy/*",
+        "./node_modules/@platformeco/delay-policy/*",
+        "./node_modules/@platformeco/csvtojson-policy/*",
+        "./node_modules/@platformeco/jsontocsv-policy/*",
+        "./node_modules/@platformeco/date-policies/*",
+        "./node_modules/@platformeco/array-policies/*",
+        "./node_modules/@platformeco/zip-policies/dist/*",
+        "./node_modules/@platformeco/string-policies/*",
+        "./node_modules/@platformeco/metrics-policies/*",
+        "./node_modules/@platformeco/jsontoxml-policy/*"
+      ],
+      "Custom Policies": [
+        "./custom_policies/*"
+      ]
+    },
+    "definitions": [
+      "./definitions/**"
+    ],
+    "loaders": [
+      "./node_modules/@platformeco/vault-loader/src"
+    ],
+    "connectors": [
+      "./node_modules/@platformeco/fastify-connector/dist",
+      "./node_modules/@platformeco/superagent-connector/dist",
+      "./node_modules/@platformeco/mongo-connector/dist",
+      "./node_modules/@platformeco/amqplib-connector/dist",
+      "./node_modules/@platformeco/kafka-connector/dist",
+      "./node_modules/@platformeco/jdbc-connector/dist",
+      "./node_modules/@platformeco/smtp-connector/dist",
+      "./node_modules/@platformeco/ioredis-connector/dist",
+      "./node_modules/@platformeco/postgres-connector/dist",
+      "./node_modules/@platformeco/ftp-connector/dist/",
+      "./node_modules/@platformeco/socketio-connector/src"
+    ],
+    "sharedFlows": {
+      "Custom Flows": [
+        "./shared_flows/**"
+      ]
+    }
+  },
+  "telemetry": {
+    "enabled": true,
+    "tracing": {
+      "transport": "stub",
+      "tracerName": "demochannel",
+      "http": {
+        "endpoint": "http://host.docker.internal:14268/api/traces"
+      }
+    }
+  },
+  "logger": {
+    "enabled": true,
+    "settings": {
+      "prettyPrint": {
+        "colorize": true
+      },
+      "level": "info"
+    }
+  },
+  "docker_registry": "art.platformeco.cloud/core"
+}
